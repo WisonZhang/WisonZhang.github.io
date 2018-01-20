@@ -87,7 +87,7 @@
 <meta property="og:site_name" content="wison的博客">
 <meta property="og:description" content="最近在项目中集成了网易云信的视频通话功能，期间遇到了几个问题，然而网上关于网易云信的问题实在有些少，官方社区也是一片冷落的迹象，很多问的问题没有人解答，因此在此记录一下自己最近踩过的坑。（基于SDK 3.8） 悬浮窗该功能是将通话界面缩小成悬浮窗在界面右上角，具体效果参考微信。在网易云信中音视频通话是在AVChatActivity中，首先要先实现将Activity放到后台的功能，这里需要在Andr">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2018-01-17T01:31:25.669Z">
+<meta property="og:updated_time" content="2018-01-18T01:05:58.972Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Android网易云信视频踩坑">
 <meta name="twitter:description" content="最近在项目中集成了网易云信的视频通话功能，期间遇到了几个问题，然而网上关于网易云信的问题实在有些少，官方社区也是一片冷落的迹象，很多问的问题没有人解答，因此在此记录一下自己最近踩过的坑。（基于SDK 3.8） 悬浮窗该功能是将通话界面缩小成悬浮窗在界面右上角，具体效果参考微信。在网易云信中音视频通话是在AVChatActivity中，首先要先实现将Activity放到后台的功能，这里需要在Andr">
@@ -316,7 +316,7 @@
 <blockquote>
 <p>Faceunity<br><a href="https://github.com/Faceunity/FUNimDemoDroid" target="_blank" rel="external">https://github.com/Faceunity/FUNimDemoDroid</a></p>
 </blockquote>
-<p>而要使用网易自带的滤镜，得先在项目中引用video.sdk和.so，这里不得不吐槽一下官方文档实在是没什么用，而且在官方音视频的demo里面是没有相关美颜的使用，使用在互动直播的demo里面。由于在项目中我只使用了美颜和磨皮，因此需要水印的功能的话可以参考互动直播的demo代码。<br>首先按照文档，相关的滤镜应该在onVideoFrameFilter的回调中使用，然而打了Log后发现该回调并没有被调用，因此往上面方法setParameters中寻找</p>
+<p>而要使用网易自带的滤镜，得先在项目中引用video_effect.jar和libvideoeffect.so，这里不得不吐槽一下官方文档实在是没什么用，而且在官方音视频的demo里面是没有相关美颜的使用，使用在互动直播的demo里面。由于在项目中我只使用了美颜和磨皮，因此需要水印的功能的话可以参考互动直播的demo代码。<br>首先按照文档，相关的滤镜应该在onVideoFrameFilter的回调中使用，然而打了Log后发现该回调并没有被调用，因此往上面方法setParameters中寻找</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">AVChatManager.getInstance().setParameters(avChatParameters);</div></pre></td></tr></table></figure>
 <p>查看设置avChatParameters的方法updateAVChatOptionalConfig()，发现并没有跟滤镜相关的设置，于是再往AVChatParameters类中查找，发现有一个KEY为AVChatParameters.KEY_VIDEO_FRAME_FILTER，设置</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">avChatParameters.setBoolean(AVChatParameters.KEY_VIDEO_FRAME_FILTER, <span class="keyword">true</span>);</div></pre></td></tr></table></figure>
@@ -351,6 +351,22 @@
       
       
 
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/12/20/Android启动模式分析/" rel="next" title="Android启动模式分析">
+                <i class="fa fa-chevron-left"></i> Android启动模式分析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
       
 
       
@@ -428,7 +444,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-count">2</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
