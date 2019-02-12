@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Android," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="我们知道，Android有四种启动模式，分别是stander、singleTop、singleTask、singleInstance。设置Activity的启动模式很简单，只要在AndroidManifest里面设置launchMode就可以。四种模式的出现是为了解决各种应用场景，下面我们来分析一下各种应用场景，以及其内部任务栈发生了什么样的变化。首先我们来了解一下什么是栈，什么是任务栈。栈是一种">
+<meta name="keywords" content="Android">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android启动模式分析">
+<meta property="og:url" content="http://yoursite.com/2017/12/20/Android启动模式分析/index.html">
+<meta property="og:site_name" content="wison的博客">
+<meta property="og:description" content="我们知道，Android有四种启动模式，分别是stander、singleTop、singleTask、singleInstance。设置Activity的启动模式很简单，只要在AndroidManifest里面设置launchMode就可以。四种模式的出现是为了解决各种应用场景，下面我们来分析一下各种应用场景，以及其内部任务栈发生了什么样的变化。首先我们来了解一下什么是栈，什么是任务栈。栈是一种">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://img.blog.csdn.net/20170319170631356?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvYWRyb2d5/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
+<meta property="og:updated_time" content="2019-02-12T15:06:43.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android启动模式分析">
+<meta name="twitter:description" content="我们知道，Android有四种启动模式，分别是stander、singleTop、singleTask、singleInstance。设置Activity的启动模式很简单，只要在AndroidManifest里面设置launchMode就可以。四种模式的出现是为了解决各种应用场景，下面我们来分析一下各种应用场景，以及其内部任务栈发生了什么样的变化。首先我们来了解一下什么是栈，什么是任务栈。栈是一种">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20170319170631356?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvYWRyb2d5/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/12/20/Android启动模式分析/"/>
+
+
+
+
+
+  <title>Android启动模式分析 | wison的博客</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">wison的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/12/20/Android启动模式分析/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Wison">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/uploads/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="wison的博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Android启动模式分析</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-12-20T08:33:53+08:00">
+                2017-12-20
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>我们知道，Android有四种启动模式，分别是stander、singleTop、singleTask、singleInstance。<br>设置Activity的启动模式很简单，只要在AndroidManifest里面设置launchMode就可以。<br>四种模式的出现是为了解决各种应用场景，下面我们来分析一下各种应用场景，以及其内部任务栈发生了什么样的变化。<br>首先我们来了解一下什么是栈，什么是任务栈。栈是一种后进先出的数据结构，有两种操作，push和pop，你可以把它想象成是在盒子里装衣服，拿衣服时最上面那件是最先拿出来的，最底下那件肯定是最后才拿出来的。而在Android里的Activity就是以这样的栈结构来进行管理的，我们称之为任务栈。我们可以通过<code>adb shell sysdump</code>命令来查看当前设备的任务栈（需要配置环境变量）。输入我们可以看到：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">TaskRecord&#123;7f67d30 #10439 A=com.wison.demo U=0 sz=2&#125;</div><div class="line">Run #3: ActivityRecord&#123;</div><div class="line"><span class="number">813695</span>e u0 com.wison.demo/.activity.MainActivity t10439&#125;</div></pre></td></tr></table></figure></p>
+<p>这里可以知道当前栈栈名为com.wison.demo，该栈有一个Activity，名字是MainActivity。</p>
+<p>四种模式都跟任务栈有关联，我们一个个来讲。</p>
+<p><strong>stander</strong><br>经典模式，也是默认的一个启动模式，在Android中我们用普通的方式启动一个Activity，就是这种模式。在这种模式下，每次启动一个Activity，都会将创建一个新的实例并放入启动这个Activity的任务栈中。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">TaskRecord&#123;7f67d30 #10439 A=com.wison.demo U=0 sz=2&#125;</div><div class="line">Run #5: ActivityRecord</div><div class="line">&#123;c513ekd u0 com.wison.demo/.activity.AActivity t10439&#125;</div><div class="line">Run #4: ActivityRecord</div><div class="line">&#123;d2164bd u0 com.wison.demo/.activity.AActivity t10439&#125;</div><div class="line">Run #3: ActivityRecord</div><div class="line">&#123;<span class="number">813695</span>e u0 com.wison.demo/.activity.MainActivity t10439&#125;</div></pre></td></tr></table></figure></p>
+<p>可以看到，MainActivity启动了AActivity并放入它所在的任务栈当中，而AActivity在启动一个AActivity会重新创建并放入该栈中。<br>而当我们尝试用Application去启动Activity时会发现报出以下错误<br><img src="http://img.blog.csdn.net/20170319170631356?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvYWRyb2d5/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="这里写图片描述"><br>如刚才所说，每次启动一个Activity，都会将创建一个新的实例并放入启动这个Activity的任务栈中。而非Activity类型的Context没有任务栈一说，因此会报错。解决方法是启动的时候为其加上一个FLAG_ACTIVITY_NEW_TASK的标志，该标志会为该启动的Activity创建一个新的任务栈并将其放入其中。</p>
+<p><strong>singleTop</strong><br>栈顶复用模式，当Activity设置这个模式后，每次启动这个Activity系统都会判断该Activity是否在栈顶存在，如果存在则不创建，如果不在栈顶则创建一个新的实例。<br>假设当前任务栈有ABC三个Activity，如果C的启动模式为singleTop，则当C启动C时，由于在栈顶C已经存在，这时候不会创建一个新的C实例，而是会复用栈顶的C。即任务栈还是ABC，这时候会调用C的onNewIntent，打Log我们可以看到</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">com.wison.demo I/tag: onPause</div><div class="line">com.wison.demo I/tag: onNewIntent</div><div class="line">com.wison.demo I/tag: onResume</div></pre></td></tr></table></figure>
+<p><strong>singleTask</strong><br>栈内复用模式，在该模式下，只要该Activity在任何一个栈内存在，就不会创建新的实例，同样的，会调用它的onNewIntent。如果这时该Activity不在栈顶，则将其之上的Activity全部弹出栈外，并将该Activity置于栈顶。<br>这里分几种情况分析。<br>一、<br>任务栈内有AB两个Activity，C的启动模式为singleTask，则启动C后的栈内情况如下<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">TaskRecord&#123;7f67d30 #10439 A=com.wison.demo U=0 sz=2&#125;</div><div class="line">Run #5: ActivityRecord</div><div class="line">&#123;c513ekd u0 com.wison.demo/.activity.CActivity t10439&#125;</div><div class="line">Run #4: ActivityRecord</div><div class="line">&#123;d2164bd u0 com.wison.demo/.activity.BActivity t10439&#125;</div><div class="line">Run #3: ActivityRecord</div><div class="line">&#123;<span class="number">813695</span>e u0 com.wison.demo/.activity.AActivity  t10439&#125;</div></pre></td></tr></table></figure></p>
+<p>当C再启动C时，由于C存在于栈顶，因此C会调用<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">com.wison.demo I/tag: onPause</div><div class="line">com.wison.demo I/tag: onNewIntent</div><div class="line">com.wison.demo I/tag: onResume</div></pre></td></tr></table></figure></p>
+<p>二、<br>任务栈内有ABCD，C的启动模式为singleTask，这时候D再启动C，任务栈的情况为<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">TaskRecord&#123;7f67d30 #10439 A=com.wison.demo U=0 sz=2&#125;</div><div class="line">Run #5: ActivityRecord</div><div class="line">&#123;c513ekd u0 com.wison.demo/.activity.CActivity t10439&#125;</div><div class="line">Run #4: ActivityRecord</div><div class="line">&#123;d2164bd u0 com.wison.demo/.activity.BActivity t10439&#125;</div><div class="line">Run #3: ActivityRecord</div><div class="line">&#123;<span class="number">813695</span>e u0 com.wison.demo/.activity.AActivity  t10439&#125;</div></pre></td></tr></table></figure></p>
+<p>从任务栈我们可以看到D已经不在任务栈，我们再看看Log的情况</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">com.wison.demo I/DActivity: onPause</div><div class="line">com.wison.demo I/CActivity: onNewIntent</div><div class="line">com.wison.demo I/CActivity: onStart</div><div class="line">com.wison.demo I/CActivity: onResume</div><div class="line">com.wison.demo I/DActivity: onStop</div><div class="line">com.wison.demo I/DActivity: onDestroy</div></pre></td></tr></table></figure>
+<p>可以看出，D已经执行onDestroy了。这也印证了如果这时该Activity不在栈顶，则将其之上的Activity全部弹出栈外，并将该Activity置于栈顶。</p>
+<p>三、<br>这里我们介绍一个新的概念，TaskAffinity，该属性能够Activity所需的任务栈名，默认为包名。同样的我们可以在AndroidManifest中进行设置。<br>这里我们设置CActivity的TaskAffinity为com.wison.test，接着我们按顺序启动ABC，再来看看任务栈的情况<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">TaskRecord&#123;b8815da #10599 A=com.wison.test U=0 sz=1&#125;</div><div class="line">Run #4: ActivityRecord&#123;</div><div class="line"><span class="number">988e526</span> u0 com.wison.demo/.activity.CActivity t10599&#125;</div><div class="line"></div><div class="line">TaskRecord&#123;35ea0b #10597 A=com.wison.demo U=0 sz=2&#125;</div><div class="line">Run #3: ActivityRecord&#123;</div><div class="line"><span class="number">7</span>efda4e u0 com.wison.demo/.activity.BActivity t10597&#125;</div><div class="line">Run #2: ActivityRecord&#123;</div><div class="line"><span class="number">9</span>dbb6a1 u0 com.wison.demo/.activity.AActivity t10597&#125;</div></pre></td></tr></table></figure></p>
+<p>可以看到，CActivity是运行在com.wison.test这个任务栈里的，这时候C是在前台的，所以com.wison.test叫做前台任务栈，而com.wison.demo则叫做后台任务栈。</p>
+<p><strong>singleInstance</strong><br>这个模式可以称为singleTask的加强版，我们可以称它为单例模式，在这个模式中，如果在任何一个任务栈中没有该实例，则单独创建一个任务栈并放入该实例，如果在某个任务栈中有该实例，则将该实例任务栈调到前台任务栈来。<br>设置CActivity的LaunchMode为singleInstance，再来启动ABC，我们看看任务栈的情况。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">TaskRecord&#123;1ed9db9 #10604 A=com.wison.demo U=0 sz=1&#125;</div><div class="line">Run #4: ActivityRecord&#123;</div><div class="line"><span class="number">4</span>c9334b u0 com.wison.demo/.activity.CActivity t10604&#125;</div><div class="line"></div><div class="line">TaskRecord&#123;72d87ac #10603 A=com.wison.demo U=0 sz=2&#125;</div><div class="line">Run #3: ActivityRecord&#123;</div><div class="line">f28fcd3 u0 com.wison.demo/.activity.BActivity t10603&#125;</div><div class="line">Run #2: ActivityRecord&#123;</div><div class="line"><span class="number">3f</span>c4983 u0 com.wison.demo/.activity.AActivity t10603&#125;</div></pre></td></tr></table></figure></p>
+<p>可以看到虽然没有指定TaskAffinity，但是CActivity还是单独在一个任务栈里。看看任务栈的情况。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">TaskRecord&#123;1ed9db9 #10604 A=com.wison.demo U=0 sz=1&#125;</div><div class="line">Run #4: ActivityRecord&#123;</div><div class="line"><span class="number">4</span>c9334b u0 com.wison.demo/.activity.CActivity t10604&#125;</div><div class="line"></div><div class="line">TaskRecord&#123;72d87ac #10603 A=com.wison.demo U=0 sz=2&#125;</div><div class="line">Run #3: ActivityRecord&#123;</div><div class="line">f28fcd3 u0 com.wison.demo/.activity.BActivity t10603&#125;</div><div class="line">Run #2: ActivityRecord&#123;</div><div class="line"><span class="number">3f</span>c4983 u0 com.wison.demo/.activity.AActivity t10603&#125;</div></pre></td></tr></table></figure></p>
+<p>可以看到虽然没有指定TaskAffinity，但是CActivity还是单独在一个任务栈里。我们接着尝试在C中启动D，看看会是什么情况。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">TaskRecord&#123;891d010 #10794 A=com.wison.demo U=0 sz=2&#125;</div><div class="line">Run #3: ActivityRecord&#123;</div><div class="line">cf7d657 u0 com.wison.demo/.activity.DActivity t10794&#125;</div><div class="line"></div><div class="line">TaskRecord&#123;367ec1a #10795 A=com.wison.demo U=0 sz=1&#125;</div><div class="line">Run #2: ActivityRecord&#123;</div><div class="line"><span class="number">12</span>cbb50 u0 com.wison.demo/.activity.CActivity t10795&#125;</div><div class="line"></div><div class="line">TaskRecord&#123;891d010 #10794 A=com.wison.demo U=0 sz=2&#125;</div><div class="line">Run #1: ActivityRecord&#123;</div><div class="line"><span class="number">3738523</span> u0 com.wison.demo/.activity.BActivity t10794&#125;</div><div class="line">Run #0: ActivityRecord&#123;</div><div class="line"><span class="number">6</span>bf361b u0 com.wison.demo/.activity.AActivity t10794&#125;</div></pre></td></tr></table></figure></p>
+<p>我们可以看到，ABD在一个任务栈，而C则还是单独在一个任务栈里，而当我们从D再次启动C时，会出现跟singleTask一样的情况。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">com.wison.demo I/DActivity: onPause</div><div class="line">com.wison.demo I/CActivity: onNewIntent</div><div class="line">com.wison.demo I/CActivity: onStart</div><div class="line">com.wison.demo I/CActivity: onResume</div><div class="line">com.wison.demo I/DActivity: onStop</div><div class="line">com.wison.demo I/DActivity: onDestroy</div></pre></td></tr></table></figure></p>
+<p>而C的任务栈当然也被放置到前台。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Android/" rel="tag"># Android</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/01/17/Android网易云信视频踩坑/" rel="prev" title="Android网易云信视频踩坑">
+                Android网易云信视频踩坑 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/uploads/avatar.jpg"
+                alt="Wison" />
+            
+              <p class="site-author-name" itemprop="name">Wison</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/wisonzhang" target="_blank" title="GitHub">
+                    
+                      <i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:villszhang@gmail.com" target="_blank" title="E-Mail">
+                    
+                      <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Wison</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

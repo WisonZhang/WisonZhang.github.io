@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Android," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="最近在项目中集成了网易云信的视频通话功能，期间遇到了几个问题，然而网上关于网易云信的问题实在有些少，官方社区也是一片冷落的迹象，很多问的问题没有人解答，因此在此记录一下自己最近踩过的坑。（基于SDK 3.8） 悬浮窗该功能是将通话界面缩小成悬浮窗在界面右上角，具体效果参考微信。在网易云信中音视频通话是在AVChatActivity中，首先要先实现将Activity放到后台的功能，这里需要在Andr">
+<meta name="keywords" content="Android">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android网易云信视频踩坑">
+<meta property="og:url" content="http://yoursite.com/2018/01/17/Android网易云信视频踩坑/index.html">
+<meta property="og:site_name" content="wison的博客">
+<meta property="og:description" content="最近在项目中集成了网易云信的视频通话功能，期间遇到了几个问题，然而网上关于网易云信的问题实在有些少，官方社区也是一片冷落的迹象，很多问的问题没有人解答，因此在此记录一下自己最近踩过的坑。（基于SDK 3.8） 悬浮窗该功能是将通话界面缩小成悬浮窗在界面右上角，具体效果参考微信。在网易云信中音视频通话是在AVChatActivity中，首先要先实现将Activity放到后台的功能，这里需要在Andr">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-02-12T15:06:43.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android网易云信视频踩坑">
+<meta name="twitter:description" content="最近在项目中集成了网易云信的视频通话功能，期间遇到了几个问题，然而网上关于网易云信的问题实在有些少，官方社区也是一片冷落的迹象，很多问的问题没有人解答，因此在此记录一下自己最近踩过的坑。（基于SDK 3.8） 悬浮窗该功能是将通话界面缩小成悬浮窗在界面右上角，具体效果参考微信。在网易云信中音视频通话是在AVChatActivity中，首先要先实现将Activity放到后台的功能，这里需要在Andr">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/01/17/Android网易云信视频踩坑/"/>
+
+
+
+
+
+  <title>Android网易云信视频踩坑 | wison的博客</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">wison的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/01/17/Android网易云信视频踩坑/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Wison">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/uploads/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="wison的博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Android网易云信视频踩坑</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-01-17T09:29:56+08:00">
+                2018-01-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>最近在项目中集成了网易云信的视频通话功能，期间遇到了几个问题，然而网上关于网易云信的问题实在有些少，官方社区也是一片冷落的迹象，很多问的问题没有人解答，因此在此记录一下自己最近踩过的坑。（基于SDK 3.8）</p>
+<h3 id="悬浮窗"><a href="#悬浮窗" class="headerlink" title="悬浮窗"></a>悬浮窗</h3><p>该功能是将通话界面缩小成悬浮窗在界面右上角，具体效果参考微信。<br>在网易云信中音视频通话是在AVChatActivity中，首先要先实现将Activity放到后台的功能，这里需要在AndroidManifest中将AVChatActivity的启动模式设为SingleInstance，之后在相应的点击事件中调用movetoback(true)即可。这里有个需要注意的地方，在onPause和onResume中将</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">avChatUI.pauseVideo();</div><div class="line">avChatUI.resumeVideo();</div></pre></td></tr></table></figure>
+<p>这两个方法去掉，否则Activity退到后台会暂停视频聊天。<br>之后我们新建一个service用来显示悬浮窗，这里贴出service的完整代码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">FloatChattingWindowService</span> <span class="keyword">extends</span> <span class="title">Service</span> <span class="keyword">implements</span> <span class="title">View</span>.<span class="title">OnClickListener</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> WindowManager windowManager;</div><div class="line">    <span class="keyword">private</span> View floatView;</div><div class="line">    <span class="keyword">private</span> LinearLayout previewLayout;</div><div class="line">    <span class="keyword">private</span> LinearLayout audioLayout;</div><div class="line">    <span class="keyword">private</span> Chronometer timeTV;</div><div class="line">    <span class="keyword">private</span> String account;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">super</span>.onCreate();</div><div class="line">        initWindow();</div><div class="line">        initEvent();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">initWindow</span><span class="params">()</span> </span>&#123;</div><div class="line">        windowManager = (WindowManager) getSystemService(Context.WINDOW_SERVICE);</div><div class="line">        WindowManager.LayoutParams params = getParams();</div><div class="line">        floatView = LayoutInflater.from(getApplicationContext())</div><div class="line">          .inflate(R.layout.layout_floating_chatting, <span class="keyword">null</span>);</div><div class="line">        previewLayout = (LinearLayout) floatView.findViewById(R.id.previewLayout);</div><div class="line">        audioLayout = (LinearLayout) floatView.findViewById(R.id.audioLayout);</div><div class="line">        timeTV = (Chronometer) floatView.findViewById(R.id.timeTV);</div><div class="line">        windowManager.addView(floatView, params);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> WindowManager.<span class="function">LayoutParams <span class="title">getParams</span><span class="params">()</span> </span>&#123;</div><div class="line">        WindowManager.LayoutParams params = <span class="keyword">new</span> WindowManager.LayoutParams();</div><div class="line">        params.type = WindowManager.LayoutParams.TYPE_TOAST;</div><div class="line">        params.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;</div><div class="line">        params.width = WindowManager.LayoutParams.WRAP_CONTENT;</div><div class="line">        params.height = WindowManager.LayoutParams.WRAP_CONTENT;</div><div class="line">        params.gravity = Gravity.END | Gravity.TOP;</div><div class="line">        params.x = ConvertUtils.dp2px(<span class="number">15</span>);</div><div class="line">        params.y = ConvertUtils.dp2px(<span class="number">15</span>);</div><div class="line">        <span class="keyword">return</span> params;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">initEvent</span><span class="params">()</span> </span>&#123;</div><div class="line">        previewLayout.setOnClickListener(<span class="keyword">this</span>);</div><div class="line">        audioLayout.setOnClickListener(<span class="keyword">this</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onClick</span><span class="params">(View v)</span> </span>&#123;</div><div class="line">        Intent intent = <span class="keyword">new</span> Intent();</div><div class="line">        intent.setClass(<span class="keyword">this</span>, AVChatActivity.class);</div><div class="line">        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);</div><div class="line">        startActivity(intent);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line"><span class="comment">     * 初始化悬浮窗视频</span></div><div class="line"><span class="comment">     * <span class="doctag">@param</span> account 对方账号</span></div><div class="line"><span class="comment">     */</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">initSurface</span><span class="params">(String account)</span> </span>&#123;</div><div class="line">        <span class="keyword">this</span>.account = account;</div><div class="line">        AVChatVideoRender render = <span class="keyword">new</span> AVChatVideoRender(getApplicationContext());</div><div class="line">        AVChatManager.getInstance().setupRemoteVideoRender(account, render, <span class="keyword">false</span>, AVChatVideoScalingType.SCALE_ASPECT_FILL);</div><div class="line">        <span class="keyword">if</span> (render.getParent() != <span class="keyword">null</span>) &#123;</div><div class="line">            ((ViewGroup) render.getParent()).removeView(render);</div><div class="line">        &#125;</div><div class="line">        previewLayout.addView(render);</div><div class="line">        render.setZOrderMediaOverlay(<span class="keyword">false</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line"><span class="comment">     * 展示语音通话</span></div><div class="line"><span class="comment">     * <span class="doctag">@param</span> base 当前通话时间</span></div><div class="line"><span class="comment">     */</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">initAudioLayout</span><span class="params">(<span class="keyword">long</span> base)</span> </span>&#123;</div><div class="line">        previewLayout.setVisibility(View.GONE);</div><div class="line">        audioLayout.setVisibility(View.VISIBLE);</div><div class="line">        timeTV.setBase(base);</div><div class="line">        timeTV.start();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onDestroy</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">super</span>.onDestroy();</div><div class="line">        <span class="keyword">if</span> (floatView != <span class="keyword">null</span>) &#123;</div><div class="line">            windowManager.removeView(floatView);</div><div class="line">        &#125;</div><div class="line">        timeTV.stop();</div><div class="line">        <span class="keyword">if</span> (!StringUtils.isSpace(account)) &#123;</div><div class="line">            AVChatManager.getInstance().setupRemoteVideoRender(account, <span class="keyword">null</span>, <span class="keyword">false</span>, <span class="number">0</span>);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Nullable</span></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> IBinder <span class="title">onBind</span><span class="params">(Intent intent)</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> <span class="keyword">new</span> MyBinder();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyBinder</span> <span class="keyword">extends</span> <span class="title">Binder</span> </span>&#123;</div><div class="line">        <span class="function"><span class="keyword">public</span> FloatChattingWindowService <span class="title">getService</span><span class="params">()</span> </span>&#123;</div><div class="line">            <span class="keyword">return</span> FloatChattingWindowService.<span class="keyword">this</span>;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">  </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>布局</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div></pre></td><td class="code"><pre><div class="line">&lt;?xml version="1.0" encoding="utf-8"?&gt;</div><div class="line"><span class="tag">&lt;<span class="name">LinearLayout</span> <span class="attr">xmlns:android</span>=<span class="string">"http://schemas.android.com/apk/res/android"</span></span></div><div class="line"><span class="tag">    <span class="attr">android:layout_width</span>=<span class="string">"wrap_content"</span></span></div><div class="line"><span class="tag">    <span class="attr">android:layout_height</span>=<span class="string">"wrap_content"</span>&gt;</span></div><div class="line"></div><div class="line">    <span class="tag">&lt;<span class="name">FrameLayout</span></span></div><div class="line"><span class="tag">        <span class="attr">android:layout_width</span>=<span class="string">"64dp"</span></span></div><div class="line"><span class="tag">        <span class="attr">android:layout_height</span>=<span class="string">"98dp"</span></span></div><div class="line"><span class="tag">        <span class="attr">android:background</span>=<span class="string">"@color/white"</span>&gt;</span></div><div class="line"></div><div class="line">        <span class="tag">&lt;<span class="name">LinearLayout</span></span></div><div class="line"><span class="tag">            <span class="attr">android:id</span>=<span class="string">"@+id/previewLayout"</span></span></div><div class="line"><span class="tag">            <span class="attr">android:layout_width</span>=<span class="string">"match_parent"</span></span></div><div class="line"><span class="tag">            <span class="attr">android:layout_height</span>=<span class="string">"match_parent"</span></span></div><div class="line"><span class="tag">            <span class="attr">android:background</span>=<span class="string">"@color/transparent"</span></span></div><div class="line"><span class="tag">            <span class="attr">android:orientation</span>=<span class="string">"vertical"</span> /&gt;</span></div><div class="line"></div><div class="line">        <span class="tag">&lt;<span class="name">LinearLayout</span></span></div><div class="line"><span class="tag">            <span class="attr">android:id</span>=<span class="string">"@+id/audioLayout"</span></span></div><div class="line"><span class="tag">            <span class="attr">android:layout_width</span>=<span class="string">"match_parent"</span></span></div><div class="line"><span class="tag">            <span class="attr">android:layout_height</span>=<span class="string">"match_parent"</span></span></div><div class="line"><span class="tag">            <span class="attr">android:background</span>=<span class="string">"@color/transparent"</span></span></div><div class="line"><span class="tag">            <span class="attr">android:gravity</span>=<span class="string">"center"</span></span></div><div class="line"><span class="tag">            <span class="attr">android:orientation</span>=<span class="string">"vertical"</span></span></div><div class="line"><span class="tag">            <span class="attr">android:visibility</span>=<span class="string">"gone"</span>&gt;</span></div><div class="line"></div><div class="line">            <span class="tag">&lt;<span class="name">ImageView</span></span></div><div class="line"><span class="tag">                <span class="attr">android:layout_width</span>=<span class="string">"wrap_content"</span></span></div><div class="line"><span class="tag">                <span class="attr">android:layout_height</span>=<span class="string">"wrap_content"</span></span></div><div class="line"><span class="tag">                <span class="attr">android:background</span>=<span class="string">"@drawable/content_icon_tel"</span>/&gt;</span></div><div class="line"></div><div class="line">            <span class="tag">&lt;<span class="name">Chronometer</span></span></div><div class="line"><span class="tag">                <span class="attr">android:id</span>=<span class="string">"@+id/timeTV"</span></span></div><div class="line"><span class="tag">                <span class="attr">android:layout_width</span>=<span class="string">"wrap_content"</span></span></div><div class="line"><span class="tag">                <span class="attr">android:layout_height</span>=<span class="string">"wrap_content"</span></span></div><div class="line"><span class="tag">                <span class="attr">android:layout_marginTop</span>=<span class="string">"5dp"</span></span></div><div class="line"><span class="tag">                <span class="attr">android:textColor</span>=<span class="string">"@color/text_item_title"</span></span></div><div class="line"><span class="tag">                <span class="attr">android:textSize</span>=<span class="string">"12sp"</span></span></div><div class="line"><span class="tag">                <span class="attr">android:visibility</span>=<span class="string">"visible"</span> /&gt;</span></div><div class="line"></div><div class="line">        <span class="tag">&lt;/<span class="name">LinearLayout</span>&gt;</span></div><div class="line">      </div><div class="line">    <span class="tag">&lt;/<span class="name">FrameLayout</span>&gt;</span></div><div class="line">  </div><div class="line"><span class="tag">&lt;/<span class="name">LinearLayout</span>&gt;</span></div></pre></td></tr></table></figure>
+<p>接下来只要在AVChatActivity创建一个ServiceConnection，并在其中调用service的方法</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">private</span> ServiceConnection chattingConnection = <span class="keyword">new</span> ServiceConnection() &#123;</div><div class="line">        <span class="meta">@Override</span></div><div class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onServiceConnected</span><span class="params">(ComponentName name, IBinder service)</span> </span>&#123;</div><div class="line">            FloatChattingWindowService.MyBinder binder = </div><div class="line">              (FloatChattingWindowService.MyBinder) service;</div><div class="line">            FloatChattingWindowService chattingService = binder.getService();</div><div class="line">            <span class="keyword">if</span> (chattingService != <span class="keyword">null</span>) &#123;</div><div class="line">                <span class="keyword">if</span> (state == AVChatType.AUDIO.getValue()) &#123;</div><div class="line">                    chattingService.initAudioLayout(avChatUI.getTimeBase());</div><div class="line">                &#125;</div><div class="line">                <span class="keyword">if</span> (state == AVChatType.VIDEO.getValue()) &#123;</div><div class="line">                    chattingService.initSurface(avChatUI.getAccount());</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        <span class="meta">@Override</span></div><div class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onServiceDisconnected</span><span class="params">(ComponentName name)</span> </span>&#123;</div><div class="line">        &#125;</div><div class="line">    &#125;;</div></pre></td></tr></table></figure>
+<p>在onPause与onRestart进行绑定与解绑的操作</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Override</span></div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onPause</span><span class="params">()</span> </span>&#123;</div><div class="line">       <span class="keyword">super</span>.onPause();</div><div class="line">       Intent intent = <span class="keyword">new</span> Intent(<span class="keyword">this</span>, FloatChattingWindowService.class);</div><div class="line">       bindService(intent, chattingConnection, Context.BIND_AUTO_CREATE);</div><div class="line">   &#125;</div><div class="line">   </div><div class="line">   <span class="meta">@Override</span></div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onRestart</span><span class="params">()</span> </span>&#123;</div><div class="line">       <span class="keyword">super</span>.onRestart();</div><div class="line">       unbindService(chattingConnection);</div><div class="line">       <span class="keyword">if</span> (state == AVChatType.VIDEO.getValue()) &#123;</div><div class="line">           <span class="keyword">if</span> (isCallEstablished) &#123;</div><div class="line">               <span class="keyword">new</span> Handler().postDelayed(<span class="keyword">new</span> Runnable() &#123;</div><div class="line">                   <span class="meta">@Override</span></div><div class="line">                   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">                       avChatUI.initAllSurfaceView(avChatUI.getAccount());</div><div class="line">                   &#125;</div><div class="line">               &#125;, <span class="number">800</span>);</div><div class="line">           &#125; <span class="keyword">else</span> &#123;</div><div class="line">               avChatUI.initLargeSurfaceView(avChatUI.getAccount());</div><div class="line">           &#125;</div><div class="line">       &#125;</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
+<p>至此，就完成了语音视频缩小到后台并且有小窗口的功能啦。</p>
+<h3 id="美颜"><a href="#美颜" class="headerlink" title="美颜"></a>美颜</h3><p>网易云信提供了基础的美颜、磨皮、水印的滤镜功能，开发者也可以接入第三方进行美颜或者特效的优化，这里提供一个第三方的使用案例</p>
+<blockquote>
+<p>Faceunity<br><a href="https://github.com/Faceunity/FUNimDemoDroid" target="_blank" rel="external">https://github.com/Faceunity/FUNimDemoDroid</a></p>
+</blockquote>
+<p>而要使用网易自带的滤镜，得先在项目中引用video_effect.jar和libvideoeffect.so，这里不得不吐槽一下官方文档实在是没什么用，而且在官方音视频的demo里面是没有相关美颜的使用，使用在互动直播的demo里面。由于在项目中我只使用了美颜和磨皮，因此需要水印的功能的话可以参考互动直播的demo代码。<br>首先按照文档，相关的滤镜应该在onVideoFrameFilter的回调中使用，然而打了Log后发现该回调并没有被调用，因此往上面方法setParameters中寻找</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">AVChatManager.getInstance().setParameters(avChatParameters);</div></pre></td></tr></table></figure>
+<p>查看设置avChatParameters的方法updateAVChatOptionalConfig()，发现并没有跟滤镜相关的设置，于是再往AVChatParameters类中查找，发现有一个KEY为AVChatParameters.KEY_VIDEO_FRAME_FILTER，设置</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">avChatParameters.setBoolean(AVChatParameters.KEY_VIDEO_FRAME_FILTER, <span class="keyword">true</span>);</div></pre></td></tr></table></figure>
+<p>再打Log，发现回调正常调用了，接下来在该方法中初始化VideoEffect并对视频进行滤镜处理，完整代码如下</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Override</span></div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">onVideoFrameFilter</span><span class="params">(AVChatVideoFrame frame)</span> </span>&#123;</div><div class="line">	<span class="keyword">if</span> (frame == <span class="keyword">null</span> || (Build.VERSION.SDK_INT &lt; <span class="number">18</span>)) &#123;</div><div class="line">    	<span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">if</span> (videoEffect == <span class="keyword">null</span>) &#123;</div><div class="line">    	mVideoEffectHandler = <span class="keyword">new</span> Handler();</div><div class="line">        videoEffect = VideoEffectFactory.getVCloudEffect();</div><div class="line">        videoEffect.init(getApplicationContext(), <span class="keyword">true</span>, <span class="keyword">false</span>);</div><div class="line">        videoEffect.setBeautyLevel(<span class="number">5</span>);</div><div class="line">        videoEffect.setFilterLevel(<span class="number">0.5f</span>);</div><div class="line">        videoEffect.setFilterType(VideoEffect.FilterType.nature);</div><div class="line">        videoEffect.addWaterMark(<span class="keyword">null</span>, <span class="number">0</span>, <span class="number">0</span>);</div><div class="line">        videoEffect.closeDynamicWaterMark(<span class="keyword">true</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">if</span> (videoEffect == <span class="keyword">null</span>) &#123;</div><div class="line">    	<span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    VideoEffect.YUVData[] result;</div><div class="line">    VideoEffect.DataFormat format = frame.format == </div><div class="line">      VideoFrame.ImageFormat.I420 ? VideoEffect.DataFormat.YUV420 : VideoEffect.DataFormat.NV21;</div><div class="line">    <span class="keyword">byte</span>[] intermediate = videoEffect.filterBufferToRGBA(format, frame.data.array(), </div><div class="line">                                                         frame.width, frame.height);</div><div class="line">    result = videoEffect.TOYUV420(intermediate, VideoEffect.DataFormat.RGBA, </div><div class="line">                                  frame.width, frame.height,</div><div class="line">    frame.rotation, <span class="number">90</span>, frame.width, frame.height, <span class="keyword">false</span>, <span class="keyword">true</span>);</div><div class="line"></div><div class="line">    System.arraycopy(result[<span class="number">0</span>].data, <span class="number">0</span>, frame.data.array(), <span class="number">0</span>, result[<span class="number">0</span>].data.length);</div><div class="line">    frame.width = result[<span class="number">0</span>].width;</div><div class="line">  	frame.height = result[<span class="number">0</span>].height;</div><div class="line">    frame.dataLen = result[<span class="number">0</span>].data.length;</div><div class="line">    frame.rotation = <span class="number">0</span>;</div><div class="line">    frame.format = VideoFrame.ImageFormat.I420;</div><div class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>最后在onDestroy中销毁VideoEffect</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">if</span> (videoEffect != <span class="keyword">null</span>) &#123;</div><div class="line">	mVideoEffectHandler.post(<span class="keyword">new</span> Runnable() &#123;</div><div class="line">        <span class="meta">@Override</span></div><div class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">            videoEffect.unInit();</div><div class="line">            videoEffect = <span class="keyword">null</span>;</div><div class="line">    	&#125;</div><div class="line">    &#125;);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>运行项目，美颜成功了~</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Android/" rel="tag"># Android</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/12/20/Android启动模式分析/" rel="next" title="Android启动模式分析">
+                <i class="fa fa-chevron-left"></i> Android启动模式分析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/02/12/FireBase动态链接接入/" rel="prev" title="FireBase动态链接接入">
+                FireBase动态链接接入 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/uploads/avatar.jpg"
+                alt="Wison" />
+            
+              <p class="site-author-name" itemprop="name">Wison</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/wisonzhang" target="_blank" title="GitHub">
+                    
+                      <i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:villszhang@gmail.com" target="_blank" title="E-Mail">
+                    
+                      <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#悬浮窗"><span class="nav-number">1.</span> <span class="nav-text">悬浮窗</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#美颜"><span class="nav-number">2.</span> <span class="nav-text">美颜</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Wison</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
