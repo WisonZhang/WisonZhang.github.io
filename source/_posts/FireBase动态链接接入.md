@@ -9,12 +9,12 @@ tags: Android
 
 #### 创建网域
 要接入链接首先需要在Firebase上的DynamicLink栏目中选择开通，然后注册自己的网域。
-![](http://pm8jyj0w6.bkt.clouddn.com/%233-01.png)
+![](http://wison.carpcai.cn/%233-01.png)
 网域会在之后创建链接展示，如你的网域是example，创建后的短链接就会是https://example.page.link/skjk
 
 #### 相关概念
 这里创建完后可以选择在控制台进行创建链接，也可以通过谷歌提供的Api自己创建链接。在邀请机制中我们使用的是自己创建链接，但在控制台这里我们可以看到相应的选项。在SDk中也会有相应的Api提供配置，创建前需要了解相应的概念。
-![](http://pm8jyj0w6.bkt.clouddn.com/%233-02.png)
+![](http://wison.carpcai.cn/%233-02.png)
 
 * 动态链接
 动态链接分为长链接与短链接，顾名思义，长连接就是长的动态链接，短链接就是短的动态链接。长连接会把深度链接的内容拼接到网域中，例如深度链接为www.xxx.com，生成的长动态链接则为https://example.page.link?www.xxx.com ，如果深度链接很长的话，生成的长连接也会很长。短链接则是将深度链接的内容进行加密，形式为https://example.page.link/skjk ，短链接在长度与保密性上都是更好的选择，但是在低版本的动态链接库上是不支持短链接的生成。使用时务必用最新版的动态链接库。
