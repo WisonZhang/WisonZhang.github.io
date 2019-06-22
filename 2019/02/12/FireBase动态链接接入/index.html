@@ -87,13 +87,13 @@
 <meta property="og:site_name" content="wison的博客">
 <meta property="og:description" content="最近接入了Firebase的动态链接用于用户分享，在国内很常见的邀请机制并没有很好的解决方案，通常都需要用户主动输入邀请人的邀请码来完成邀请条件。而在国外谷歌推出了Firebase的动态链接，当打开链接时App能够接收到相关的信息回调。这个很好的解决邀请同时不需要用户手动填写邀请码的问题。接入之前需要在Firebase后台创建相应项目，iOS需要设置包ID，App store ID，团队ID，An">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://pm8jyj0w6.bkt.clouddn.com/%233-01.png">
-<meta property="og:image" content="http://pm8jyj0w6.bkt.clouddn.com/%233-02.png">
-<meta property="og:updated_time" content="2019-02-12T15:25:23.000Z">
+<meta property="og:image" content="http://wison.carpcai.cn/%233-01.png">
+<meta property="og:image" content="http://wison.carpcai.cn/%233-02.png">
+<meta property="og:updated_time" content="2019-06-22T07:01:18.373Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="FireBase动态链接接入">
 <meta name="twitter:description" content="最近接入了Firebase的动态链接用于用户分享，在国内很常见的邀请机制并没有很好的解决方案，通常都需要用户主动输入邀请人的邀请码来完成邀请条件。而在国外谷歌推出了Firebase的动态链接，当打开链接时App能够接收到相关的信息回调。这个很好的解决邀请同时不需要用户手动填写邀请码的问题。接入之前需要在Firebase后台创建相应项目，iOS需要设置包ID，App store ID，团队ID，An">
-<meta name="twitter:image" content="http://pm8jyj0w6.bkt.clouddn.com/%233-01.png">
+<meta name="twitter:image" content="http://wison.carpcai.cn/%233-01.png">
 
 
 
@@ -304,8 +304,8 @@
 
       
         <p>最近接入了Firebase的动态链接用于用户分享，在国内很常见的邀请机制并没有很好的解决方案，通常都需要用户主动输入邀请人的邀请码来完成邀请条件。而在国外谷歌推出了Firebase的动态链接，当打开链接时App能够接收到相关的信息回调。这个很好的解决邀请同时不需要用户手动填写邀请码的问题。<br>接入之前需要在Firebase后台创建相应项目，iOS需要设置包ID，App store ID，团队ID，Android需要设置报名与SHA-1，SHA-256签名。</p>
-<h4 id="创建网域"><a href="#创建网域" class="headerlink" title="创建网域"></a>创建网域</h4><p>要接入链接首先需要在Firebase上的DynamicLink栏目中选择开通，然后注册自己的网域。<br><img src="http://pm8jyj0w6.bkt.clouddn.com/%233-01.png" alt=""><br>网域会在之后创建链接展示，如你的网域是example，创建后的短链接就会是<a href="https://example.page.link/skjk" target="_blank" rel="external">https://example.page.link/skjk</a></p>
-<h4 id="相关概念"><a href="#相关概念" class="headerlink" title="相关概念"></a>相关概念</h4><p>这里创建完后可以选择在控制台进行创建链接，也可以通过谷歌提供的Api自己创建链接。在邀请机制中我们使用的是自己创建链接，但在控制台这里我们可以看到相应的选项。在SDk中也会有相应的Api提供配置，创建前需要了解相应的概念。<br><img src="http://pm8jyj0w6.bkt.clouddn.com/%233-02.png" alt=""></p>
+<h4 id="创建网域"><a href="#创建网域" class="headerlink" title="创建网域"></a>创建网域</h4><p>要接入链接首先需要在Firebase上的DynamicLink栏目中选择开通，然后注册自己的网域。<br><img src="http://wison.carpcai.cn/%233-01.png" alt=""><br>网域会在之后创建链接展示，如你的网域是example，创建后的短链接就会是<a href="https://example.page.link/skjk" target="_blank" rel="external">https://example.page.link/skjk</a></p>
+<h4 id="相关概念"><a href="#相关概念" class="headerlink" title="相关概念"></a>相关概念</h4><p>这里创建完后可以选择在控制台进行创建链接，也可以通过谷歌提供的Api自己创建链接。在邀请机制中我们使用的是自己创建链接，但在控制台这里我们可以看到相应的选项。在SDk中也会有相应的Api提供配置，创建前需要了解相应的概念。<br><img src="http://wison.carpcai.cn/%233-02.png" alt=""></p>
 <ul>
 <li><p>动态链接<br>动态链接分为长链接与短链接，顾名思义，长连接就是长的动态链接，短链接就是短的动态链接。长连接会把深度链接的内容拼接到网域中，例如深度链接为www.xxx.com，生成的长动态链接则为<a href="https://example.page.link?www.xxx.com" target="_blank" rel="external">https://example.page.link?www.xxx.com</a> ，如果深度链接很长的话，生成的长连接也会很长。短链接则是将深度链接的内容进行加密，形式为<a href="https://example.page.link/skjk" target="_blank" rel="external">https://example.page.link/skjk</a> ，短链接在长度与保密性上都是更好的选择，但是在低版本的动态链接库上是不支持短链接的生成。使用时务必用最新版的动态链接库。</p>
 </li>
@@ -350,8 +350,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/01/17/Android网易云信视频踩坑/" rel="next" title="Android网易云信视频踩坑">
-                <i class="fa fa-chevron-left"></i> Android网易云信视频踩坑
+              <a href="/2018/06/12/Android P 新特性及适配/" rel="next" title="Android P 新特性及适配">
+                <i class="fa fa-chevron-left"></i> Android P 新特性及适配
               </a>
             
           </div>
@@ -443,7 +443,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-count">5</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
