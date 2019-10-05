@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Android," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="HandlerThread和IntentService都是Android提供方便开发者使用的类，通过这两个类我们可以方便快捷的执行异步任务。而将这两个类放在一起分析，是因为IntentService中使用了HandlerThread。 HandlerThread在项目中我们经常会为了耗时操作来开启线程执行耗时的代码，但是在系统中创建线程和销毁线程都会损耗系统的性能。而当我们线程过多时，系统在调度切">
+<meta name="keywords" content="Android">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HandlerThread与IntentService">
+<meta property="og:url" content="http://yoursite.com/2018/01/05/HandlerThread与IntentService/index.html">
+<meta property="og:site_name" content="wison的博客">
+<meta property="og:description" content="HandlerThread和IntentService都是Android提供方便开发者使用的类，通过这两个类我们可以方便快捷的执行异步任务。而将这两个类放在一起分析，是因为IntentService中使用了HandlerThread。 HandlerThread在项目中我们经常会为了耗时操作来开启线程执行耗时的代码，但是在系统中创建线程和销毁线程都会损耗系统的性能。而当我们线程过多时，系统在调度切">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-10-05T08:44:51.890Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="HandlerThread与IntentService">
+<meta name="twitter:description" content="HandlerThread和IntentService都是Android提供方便开发者使用的类，通过这两个类我们可以方便快捷的执行异步任务。而将这两个类放在一起分析，是因为IntentService中使用了HandlerThread。 HandlerThread在项目中我们经常会为了耗时操作来开启线程执行耗时的代码，但是在系统中创建线程和销毁线程都会损耗系统的性能。而当我们线程过多时，系统在调度切">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/01/05/HandlerThread与IntentService/"/>
+
+
+
+
+
+  <title>HandlerThread与IntentService | wison的博客</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">wison的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/01/05/HandlerThread与IntentService/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Wison">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/uploads/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="wison的博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">HandlerThread与IntentService</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-01-05T21:17:23+08:00">
+                2018-01-05
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>HandlerThread和IntentService都是Android提供方便开发者使用的类，通过这两个类我们可以方便快捷的执行异步任务。而将这两个类放在一起分析，是因为IntentService中使用了HandlerThread。</p>
+<h3 id="HandlerThread"><a href="#HandlerThread" class="headerlink" title="HandlerThread"></a>HandlerThread</h3><p>在项目中我们经常会为了耗时操作来开启线程执行耗时的代码，但是在系统中创建线程和销毁线程都会损耗系统的性能。而当我们线程过多时，系统在调度切换线程时也同样会性能的开销。因此，我们可以选择线程池来防止创建过多的线程，而如果在任务不需要并发，允许任务以队列的顺序执行的场景下，我们可以使用HandlerThread，相比起线程池，HandlerThread减少线程创建与销毁，切换线程的开销。</p>
+<h4 id="HandlerThread-的使用"><a href="#HandlerThread-的使用" class="headerlink" title="HandlerThread 的使用"></a>HandlerThread 的使用</h4><p>先来看看HandlerThread在代码中的使用</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">HandlerThreadActivity</span> <span class="keyword">extends</span> <span class="title">Activity</span> <span class="keyword">implements</span> <span class="title">View</span>.<span class="title">OnClickListener</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> Handler handler;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</div><div class="line">        <span class="keyword">super</span>.onCreate(savedInstanceState);</div><div class="line">        setContentView(R.layout.activity_handler_thread);</div><div class="line"></div><div class="line">        HandlerThread handlerThread = <span class="keyword">new</span> HandlerThread(<span class="string">"Test Handler Thread"</span>);</div><div class="line">        handlerThread.start();</div><div class="line">        handler = <span class="keyword">new</span> Handler(handlerThread.getLooper())&#123;</div><div class="line">            <span class="meta">@Override</span></div><div class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">handleMessage</span><span class="params">(Message msg)</span> </span>&#123;</div><div class="line">                <span class="keyword">super</span>.handleMessage(msg);</div><div class="line">                Log.i(<span class="string">"HandlerThread"</span>, Thread.currentThread().getName() + <span class="string">" get Msg : "</span> + msg.obj.toString());</div><div class="line">            &#125;</div><div class="line">        &#125;;</div><div class="line"></div><div class="line">        Button btn = findViewById(R.id.handler_thread_btn);</div><div class="line">        btn.setOnClickListener(<span class="keyword">this</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onClick</span><span class="params">(View v)</span> </span>&#123;</div><div class="line">        <span class="keyword">if</span> (handler != <span class="keyword">null</span>) &#123;</div><div class="line">            Message message = Message.obtain();</div><div class="line">            message.obj = <span class="string">"This is Msg From "</span> + Thread.currentThread().getName() + <span class="string">" in "</span> + System.currentTimeMillis();</div><div class="line">            handler.sendMessage(message);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>可以看到代码中通过HandlerThread创建了一个Handler，在点击按钮的时候通过Handler发送信息，并附上当前线程名与时间戳。在Handler接收信息的时候打印Handler所在的线程名与接收到的信息。连续点击按钮5次，看看Log的打印日志。从日志可以看到，任务是以队列的顺序来执行的。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">Test Handler Thread get Msg : This is Msg From main in 1515155429407</div><div class="line">Test Handler Thread get Msg : This is Msg From main in 1515155429819</div><div class="line">Test Handler Thread get Msg : This is Msg From main in 1515155430128</div><div class="line">Test Handler Thread get Msg : This is Msg From main in 1515155430381</div><div class="line">Test Handler Thread get Msg : This is Msg From main in 1515155430551</div></pre></td></tr></table></figure>
+<h4 id="HandlerThread-的实现"><a href="#HandlerThread-的实现" class="headerlink" title="HandlerThread 的实现"></a>HandlerThread 的实现</h4><p>HandlerThread内部主要实现是与Handler一样的机制，Looper，这也是为什么这个类的名字有Handler存在的原因。HandlerThread的源码并不多，加上注释只有一百多行，我们看下代码。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">HandlerThread</span> <span class="keyword">extends</span> <span class="title">Thread</span> </span>&#123;</div><div class="line">    <span class="keyword">int</span> mPriority;</div><div class="line">    <span class="keyword">int</span> mTid = -<span class="number">1</span>;</div><div class="line">    Looper mLooper;</div><div class="line">    <span class="keyword">private</span> <span class="meta">@Nullable</span> Handler mHandler;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">HandlerThread</span><span class="params">(String name)</span> </span>&#123;</div><div class="line">        <span class="keyword">super</span>(name);</div><div class="line">        mPriority = Process.THREAD_PRIORITY_DEFAULT;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">HandlerThread</span><span class="params">(String name, <span class="keyword">int</span> priority)</span> </span>&#123;</div><div class="line">        <span class="keyword">super</span>(name);</div><div class="line">        mPriority = priority;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onLooperPrepared</span><span class="params">()</span> </span>&#123;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">        mTid = Process.myTid();</div><div class="line">        Looper.prepare();</div><div class="line">        <span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;</div><div class="line">            mLooper = Looper.myLooper();</div><div class="line">            notifyAll();</div><div class="line">        &#125;</div><div class="line">        Process.setThreadPriority(mPriority);</div><div class="line">        onLooperPrepared();</div><div class="line">        Looper.loop();</div><div class="line">        mTid = -<span class="number">1</span>;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> Looper <span class="title">getLooper</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">if</span> (!isAlive()) &#123;</div><div class="line">            <span class="keyword">return</span> <span class="keyword">null</span>;</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        <span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;</div><div class="line">            <span class="keyword">while</span> (isAlive() &amp;&amp; mLooper == <span class="keyword">null</span>) &#123;</div><div class="line">                <span class="keyword">try</span> &#123;</div><div class="line">                    wait();</div><div class="line">                &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> mLooper;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line"><span class="comment">     * <span class="doctag">@hide</span></span></div><div class="line"><span class="comment">     */</span></div><div class="line">    <span class="meta">@NonNull</span></div><div class="line">    <span class="function"><span class="keyword">public</span> Handler <span class="title">getThreadHandler</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">if</span> (mHandler == <span class="keyword">null</span>) &#123;</div><div class="line">            mHandler = <span class="keyword">new</span> Handler(getLooper());</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> mHandler;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">quit</span><span class="params">()</span> </span>&#123;</div><div class="line">        Looper looper = getLooper();</div><div class="line">        <span class="keyword">if</span> (looper != <span class="keyword">null</span>) &#123;</div><div class="line">            looper.quit();</div><div class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">quitSafely</span><span class="params">()</span> </span>&#123;</div><div class="line">        Looper looper = getLooper();</div><div class="line">        <span class="keyword">if</span> (looper != <span class="keyword">null</span>) &#123;</div><div class="line">            looper.quitSafely();</div><div class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getThreadId</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> mTid;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>从源码我们可以看到它有两个构造方法，在构造方法我们可以设置线程名与线程的优先级。HandlerThread是继承与Thread，因此使用的时候记得要调用start方法，在run方法中做了同步方法的Looper的初始化，在Looper初始化之后调用notifyAll来唤醒其他等待线程。这么做的原因是当我们创建HandlerThread独有的Handler时需要用到其Looper，HandlerThread提供了getLooper方法来提供Looper，使用时有可能获取Looper时还未初始化完毕，在getLooper方法中当Looper还未初始化时会释放锁进入阻塞状态，此时notifyAll会唤醒这些阻塞的线程。当没有使用start方法就调用getLooper时，会通过isAlive()判断线程是否启动，如果没有启动会返回null值，这点需要注意一下。</p>
+<p>因为有Looper的原因，所以HandlerThread一直都在运行没有停止，当我们想关闭HandlerThread时，可以使用quit()或者quitSafely() 来退出HandlerThread，那么这两个函数有什么区别呢？从代码可以看出，两者的区别就是分别调用了looper.quit()和looper.quitSafely()。查看Looper代码可知Looper.quit()最终会调用MessageQueue.removeAllMessagesLocked()，而Looper.quitsafely()会调用MessageQueue.removeAllFutureMessagesLocked()。quit()实际上是把消息队列全部清空，然后让MessageQueue.next()返回null令Looper.loop()循环结束从而终止Handler机制，但是可能有些消息在消息队列没来得及处理。而quitsafely()只清除消息队列中延迟信息，等待消息队列剩余信息处理完之后再终止Looper循环。</p>
+<h3 id="IntentService"><a href="#IntentService" class="headerlink" title="IntentService"></a>IntentService</h3><p>相比起Service，IntentService提供了异步操作，而且在使用完之后会自己销毁，不需要像Service那样需要调用stop方法来停止。先来看看使用方式。</p>
+<h4 id="IntentService-的使用"><a href="#IntentService-的使用" class="headerlink" title="IntentService 的使用"></a>IntentService 的使用</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">TestIntentService</span> <span class="keyword">extends</span> <span class="title">IntentService</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">TestIntentService</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">super</span>(<span class="string">"TestIntentService"</span>);</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">     <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">super</span>.onCreate();</div><div class="line">        Log.i(<span class="string">"TestIntentService"</span>, <span class="string">"onCreate"</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onStart</span><span class="params">(@Nullable Intent intent, <span class="keyword">int</span> startId)</span> </span>&#123;</div><div class="line">        <span class="keyword">super</span>.onStart(intent, startId);</div><div class="line">        Log.i(<span class="string">"TestIntentService"</span>, <span class="string">"onStart"</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">onStartCommand</span><span class="params">(@Nullable Intent intent, <span class="keyword">int</span> flags, <span class="keyword">int</span> startId)</span> </span>&#123;</div><div class="line">        Log.i(<span class="string">"TestIntentService"</span>, <span class="string">"onStartCommand"</span>);</div><div class="line">        <span class="keyword">return</span> <span class="keyword">super</span>.onStartCommand(intent, flags, startId);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onHandleIntent</span><span class="params">(@Nullable Intent intent)</span> </span>&#123;</div><div class="line">        Log.i(<span class="string">"TestIntentService"</span>, <span class="string">"onHandleIntent : "</span> + Thread.currentThread().getName());</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onDestroy</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">super</span>.onDestroy();</div><div class="line">        Log.i(<span class="string">"TestIntentService"</span>, <span class="string">"onDestroy"</span>);</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MainActivity</span> <span class="keyword">extends</span> <span class="title">AppCompatActivity</span> <span class="keyword">implements</span> <span class="title">View</span>.<span class="title">OnClickListener</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</div><div class="line">        <span class="keyword">super</span>.onCreate(savedInstanceState);</div><div class="line">        setContentView(R.layout.activity_main);</div><div class="line"></div><div class="line">        Button btn = findViewById(R.id.intent_service_btn);</div><div class="line">        btn.setOnClickListener(<span class="keyword">this</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onClick</span><span class="params">(View v)</span> </span>&#123;</div><div class="line">        Intent intent = <span class="keyword">new</span> Intent(<span class="keyword">this</span>, TestIntentService.class);</div><div class="line">        startService(intent);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">// 记得在AndroidManifest中注册</span></div><div class="line">&lt;service android:name=<span class="string">".touch.TestIntentService"</span> /&gt;</div></pre></td></tr></table></figure>
+<p>使用IntentService时需要创建类继承IntentService，因为IntentService是个抽象类，同时需要调用IntentService的构造方法，传入一个mName参数，同时需要实现构造方法onHandleIntent。在Activity实现时跟平时使用Service一样调用start方法就可以了。在调用start方法后，打印出各个方法的log，可以看出在onHandleIntent的方法中是在异步的线程，线程名是IntentService[mName]，mName是我们之前传入的参数。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">TestIntentService: onCreate</div><div class="line">TestIntentService: onStartCommand</div><div class="line">TestIntentService: onStart</div><div class="line">TestIntentService: onHandleIntent : IntentService[TestIntentService]</div><div class="line">TestIntentService: onDestroy</div></pre></td></tr></table></figure></p>
+<h3 id="IntentService-的实现"><a href="#IntentService-的实现" class="headerlink" title="IntentService 的实现"></a>IntentService 的实现</h3><p>IntenteService的代码也是不多，先看下代码。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">IntentService</span> <span class="keyword">extends</span> <span class="title">Service</span> </span>&#123;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">volatile</span> Looper mServiceLooper;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">volatile</span> ServiceHandler mServiceHandler;</div><div class="line">    <span class="keyword">private</span> String mName;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">boolean</span> mRedelivery;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">ServiceHandler</span> <span class="keyword">extends</span> <span class="title">Handler</span> </span>&#123;</div><div class="line">        <span class="function"><span class="keyword">public</span> <span class="title">ServiceHandler</span><span class="params">(Looper looper)</span> </span>&#123;</div><div class="line">            <span class="keyword">super</span>(looper);</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        <span class="meta">@Override</span></div><div class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">handleMessage</span><span class="params">(Message msg)</span> </span>&#123;</div><div class="line">            onHandleIntent((Intent)msg.obj);</div><div class="line">            stopSelf(msg.arg1);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">IntentService</span><span class="params">(String name)</span> </span>&#123;</div><div class="line">        <span class="keyword">super</span>();</div><div class="line">        mName = name;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setIntentRedelivery</span><span class="params">(<span class="keyword">boolean</span> enabled)</span> </span>&#123;</div><div class="line">        mRedelivery = enabled;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">super</span>.onCreate();</div><div class="line">        HandlerThread thread = <span class="keyword">new</span> HandlerThread(<span class="string">"IntentService["</span> + mName + <span class="string">"]"</span>);</div><div class="line">        thread.start();</div><div class="line"></div><div class="line">        mServiceLooper = thread.getLooper();</div><div class="line">        mServiceHandler = <span class="keyword">new</span> ServiceHandler(mServiceLooper);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onStart</span><span class="params">(@Nullable Intent intent, <span class="keyword">int</span> startId)</span> </span>&#123;</div><div class="line">        Message msg = mServiceHandler.obtainMessage();</div><div class="line">        msg.arg1 = startId;</div><div class="line">        msg.obj = intent;</div><div class="line">        mServiceHandler.sendMessage(msg);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">onStartCommand</span><span class="params">(@Nullable Intent intent, <span class="keyword">int</span> flags, <span class="keyword">int</span> startId)</span> </span>&#123;</div><div class="line">        onStart(intent, startId);</div><div class="line">        <span class="keyword">return</span> mRedelivery ? START_REDELIVER_INTENT : START_NOT_STICKY;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onDestroy</span><span class="params">()</span> </span>&#123;</div><div class="line">        mServiceLooper.quit();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="meta">@Nullable</span></div><div class="line">    <span class="function"><span class="keyword">public</span> IBinder <span class="title">onBind</span><span class="params">(Intent intent)</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@WorkerThread</span></div><div class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">abstract</span> <span class="keyword">void</span> <span class="title">onHandleIntent</span><span class="params">(@Nullable Intent intent)</span></span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>从代码我们了解到，IntentService是继承了Service的一个抽象类，提供了onHandleIntent的抽象方法。在onCreate中创建了HandlerThread，并以构造函数接收到的name作为线程名，同时获取了HandlerThread的Looper和创建所属的Handler。可以看到，在IntentService的onStartCommand调用了onStart方法，多次调用startService时只会调用onStartCommand方法，onStart是为了向下兼容，在onStart方法中通过发送消息到Handler处理，在Handler的HandleMessage中调用了抽象方法onHandleIntent，因此onHandleIntent是运行在HandlerThread的异步线程中，也是在onHandleIntent能做耗时操作的原因。而在onHandleIntent后立即调用了stopSelf方法，这就是我们不用手动停止IntentService的原因，因为它会自己停止。</p>
+<p><strong>需要注意的点</strong></p>
+<ol>
+<li>我们知道，Service还有一种启动方式，bindService，通常我们会使用onBind返回的IBinder与Service交互，而在IntentService中，onBind返回的是null，即当我们使用bindService时我们不能享受IntentService提供的异步功能，只能得到一个无法交互的Service。</li>
+<li>当我们多次调用startService时，从Log可以看到多次调用了onCreate和onDestroy，这是因为我们在onHandleIntent只是做了打印工作，所以执行完很快就调用stopSelf。尝试修改下onHandleIntent，同时打印出onStartCommand的startId，然后再多次执行startService，查看Log。<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div></pre></td><td class="code"><pre><div class="line"> <span class="meta">@Override</span></div><div class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onHandleIntent</span><span class="params">(@Nullable Intent intent)</span> </span>&#123;</div><div class="line">    Log.i(<span class="string">"TestIntentService"</span>, <span class="string">"onHandleIntent : "</span> + Thread.currentThread().getName());</div><div class="line">    <span class="keyword">try</span> &#123;</div><div class="line">        Thread.sleep(<span class="number">1000</span>);</div><div class="line">    &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</div><div class="line">        e.printStackTrace();</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="meta">@Override</span></div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">onStartCommand</span><span class="params">(@Nullable Intent intent, <span class="keyword">int</span> flags, <span class="keyword">int</span> startId)</span> </span>&#123;</div><div class="line">    Log.i(<span class="string">"TestIntentService"</span>, <span class="string">"onStartCommand : "</span> + startId);</div><div class="line">    <span class="keyword">return</span> <span class="keyword">super</span>.onStartCommand(intent, flags, startId);</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">// Log</span></div><div class="line">TestIntentService: onCreate</div><div class="line">TestIntentService: onStartCommand : <span class="number">1</span></div><div class="line">TestIntentService: onStart</div><div class="line">TestIntentService: onHandleIntent : IntentService[TestIntentService]</div><div class="line">TestIntentService: onStartCommand : <span class="number">2</span></div><div class="line">TestIntentService: onStart</div><div class="line">TestIntentService: onStartCommand : <span class="number">3</span></div><div class="line">TestIntentService: onStart</div><div class="line">TestIntentService: onHandleIntent : IntentService[TestIntentService]</div><div class="line">TestIntentService: onStartCommand : <span class="number">4</span></div><div class="line">TestIntentService: onStart</div><div class="line">TestIntentService: onHandleIntent : IntentService[TestIntentService]</div><div class="line">TestIntentService: onHandleIntent : IntentService[TestIntentService]</div><div class="line">TestIntentService: onDestroy</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>当执行耗时操作，我们连续四次startService时，从Log我们可以看出，onCreate和onDestroy只会调用一次，onStartCommand的startId会递增。原因是在IntentService调用stopSelf(msg.arg1)时传入了Message的参数，在onStart方法中我们可以看到msg.arg1就是startId。Service提供了stopSelf和stopSelf(startId)方法，stopSelf其实也是调用了stopSelf(-1)，它的意义是，在销毁时会判断当前的startId是否与参数的一致，如果一致则销毁，如果不一致则不销毁，而多次startService会改变startId的值，所以onCreate和onDestroy只会调用一次。这样做的好处是，减少了HandlerThread的创建，即线程的创建，提高了IntentService的利用率。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Android/" rel="tag"># Android</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/12/20/Android启动模式分析/" rel="next" title="Android启动模式分析">
+                <i class="fa fa-chevron-left"></i> Android启动模式分析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/01/17/Android网易云信视频踩坑/" rel="prev" title="Android网易云信视频踩坑">
+                Android网易云信视频踩坑 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/uploads/avatar.jpg"
+                alt="Wison" />
+            
+              <p class="site-author-name" itemprop="name">Wison</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">8</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/wisonzhang" target="_blank" title="GitHub">
+                    
+                      <i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:villszhang@gmail.com" target="_blank" title="E-Mail">
+                    
+                      <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#HandlerThread"><span class="nav-number">1.</span> <span class="nav-text">HandlerThread</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#HandlerThread-的使用"><span class="nav-number">1.1.</span> <span class="nav-text">HandlerThread 的使用</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HandlerThread-的实现"><span class="nav-number">1.2.</span> <span class="nav-text">HandlerThread 的实现</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IntentService"><span class="nav-number">2.</span> <span class="nav-text">IntentService</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#IntentService-的使用"><span class="nav-number">2.1.</span> <span class="nav-text">IntentService 的使用</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IntentService-的实现"><span class="nav-number">3.</span> <span class="nav-text">IntentService 的实现</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Wison</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
